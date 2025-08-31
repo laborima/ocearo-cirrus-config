@@ -1,0 +1,62 @@
+name: Build and Publish Debian Package
+
+on:
+  push:
+    tags:
+      - "v*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential devscripts debhelper dpkg-dev
+
+      - name: Set version from tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          dch -v "$VERSION-1" --distribution stable --changelog debian/changelog "New release $VERSION"
+
+      - name: Build Debian package
+        run: |
+          dpkg-buildpackage -us -uc -b
+          mkdir -p repo
+          mv ../cirrusconfig_*_all.deb repo/
+
+      - name: Create Packages index
+        run: |
+          cd repo
+          dpkg-scanpackages . /dev/null > Packages
+          gzip -9c Packages > Packages.gz
+
+      - name: Generate Release file
+        run: |
+          cd repo
+          cat > Release <<EOF
+          Origin: CirrusConfig
+          Label: CirrusConfig
+          Codename: stable
+          Architectures: all
+          Components: main
+          Description: APT repository for CirrusConfig
+          Date: $(date -u +"%a, %d %b %Y %H:%M:%S %Z")
+          EOF
+          echo "MD5Sum:" >> Release
+          for f in $(ls -1 *); do
+            echo " $(md5sum $f | cut -d' ' -f1) $(du -b $f | cut -f1) $f" >> Release
+          done
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: repo
+          force_orphan: true

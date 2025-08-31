@@ -1,0 +1,17 @@
+# Fichiers de construction Debian
+*.deb
+*.buildinfo
+*.changes
+*.dsc
+*.tar.gz
+*.build
+*.debhelper
+
+# Fichiers temporaires
+*.swp
+*~
+
+# Dossiers de construction
+/debian/.debhelper/
+/debian/cirrusconfig/
+/repo/
