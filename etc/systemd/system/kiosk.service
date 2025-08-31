@@ -1,0 +1,13 @@
+[Unit]
+Description=Dual screen kiosk
+After=graphical.target
+
+[Service]
+User=pi
+Environment=XAUTHORITY=/home/pi/.Xauthority
+Environment=DISPLAY=:0
+ExecStart=/usr/local/bin/kiosk-start.sh
+Restart=always
+
+[Install]
+WantedBy=graphical.target

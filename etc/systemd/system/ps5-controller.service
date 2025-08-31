@@ -1,0 +1,11 @@
+[Unit]
+Description=PS5 Controller Setup
+After=bluetooth.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/setup-ps5.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
