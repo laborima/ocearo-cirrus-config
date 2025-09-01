@@ -1,6 +1,6 @@
-# CirrusConfig - Multi-Screen Kiosk for Raspberry Pi
+# Ocearo configuration for cirrus RPI5 and multiple screens
 
-This project provides a Debian package to easily configure a dual-screen kiosk with touch support on Raspberry Pi, including automatic certificate management and PS5 controller support.
+This project provides a Debian package to easily configure a dual-screen kiosk with touch support on Raspberry Pi, including automatic certificate management and PS5 controller support for autopilot control
 
 ## Features
 
