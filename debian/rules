@@ -1,3 +1,7 @@
 #!/usr/bin/make -f
+
+# Skip dh_usrlocal since we install scripts to /usr/local/bin
+override_dh_usrlocal:
+
 %:
 	dh $@
