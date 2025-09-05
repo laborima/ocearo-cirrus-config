@@ -1,0 +1,12 @@
+Origin: CirrusConfig
+Label: CirrusConfig
+Codename: stable
+Architectures: all
+Components: main
+Description: APT repository for CirrusConfig
+Date: Fri, 05 Sep 2025 17:08:06 UTC
+MD5Sum:
+ 52b97b275e70d1a4f676c4dba2698f65 651 Packages
+ 3f270de92dd700d75eba999def3cf1c7 468 Packages.gz
+ 31a042b1b477359654ba3a4bb689cf08 280 Release
+ 3048a4143db83dce0c4f7c3e245779d3 5326 cirrusconfig_1.0.1-test-1_all.deb

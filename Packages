@@ -1,0 +1,17 @@
+Package: cirrusconfig
+Version: 1.0.1-test-1
+Architecture: all
+Maintainer: Matthieu Laborie <laborima@gmail.com>
+Installed-Size: 29
+Depends: chromium, xserver-xorg, xinput, x11-xserver-utils, bluez, joystick, pulseaudio-utils, libnss3-tools
+Recommends: xboxdrv
+Filename: ./cirrusconfig_1.0.1-test-1_all.deb
+Size: 5326
+MD5sum: 3048a4143db83dce0c4f7c3e245779d3
+SHA1: 28aa09f35197c5ad0049351776a0ad50678c0519
+SHA256: a8fbd3d110f83f792e44103e6b9e8fc7656fe0ba7d700086f4e9c966783a7463
+Section: utils
+Priority: optional
+Description: Dual screen kiosk setup for Raspberry Pi
+ This package configures dual touchscreen kiosk mode with Chromium on Raspberry Pi.
+
