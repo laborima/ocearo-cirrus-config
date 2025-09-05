@@ -7,7 +7,7 @@ Standards-Version: 4.5.0
 
 Package: cirrusconfig
 Architecture: all
-Depends: ${misc:Depends}, chromium-browser, xserver-xorg, xinput, x11-xserver-utils, bluez, joystick, pulseaudio-utils, libnss3-tools
+Depends: ${misc:Depends}, chromium, xserver-xorg, xinput, x11-xserver-utils, bluez, joystick, pulseaudio-utils, libnss3-tools
 Recommends: xboxdrv
 Description: Dual screen kiosk setup for Raspberry Pi
  This package configures dual touchscreen kiosk mode with Chromium on Raspberry Pi.

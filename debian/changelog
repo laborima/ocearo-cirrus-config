@@ -1,3 +1,9 @@
+cirrusconfig (0.1-2) unstable; urgency=medium
+
+  * Fix dependency: change chromium-browser to chromium for Debian Bookworm compatibility
+
+ -- Matthieu Laborie <laborima@gmail.com>  Wed, 04 Sep 2024 18:37:00 +0200
+
 cirrusconfig (0.1-1) unstable; urgency=medium
 
   * Initial release.
