@@ -131,3 +131,77 @@ This package installs and manages the following services:
 ## License
 
 Apache 2.0 - See `debian/copyright` for details.
+
+
+pi@cirrus:~ $ nmcli con show
+NAME                          UUID                                  TYPE       DEVICE 
+Tel@Matthieu                  ***REMOVED***  wifi       wlan0  
+lo                            ***REMOVED***  loopback   lo     
+Administratif                 ***REMOVED***  wifi       --     
+Ifupdown (can0)               ***REMOVED***  ethernet   --     
+Port_Plaisance_La_Rochelle    ***REMOVED***  wifi       --     
+Port_Plaisance_La_Rochelle 1  ***REMOVED***  wifi       --     
+Tel@Matthieu 1                ***REMOVED***  wifi       --     
+Tel@Matthieu 2                ***REMOVED***  wifi       --     
+Tel@Matthieu Network          ***REMOVED***  bluetooth  --     
+Wired connection 1            ***REMOVED***  ethernet   --     
+nausicaa                      ***REMOVED***  wifi       --     
+pi@cirrus:~ $ 
+
+i@cirrus:~ $ sudo cat  /etc/NetworkManager/system-connections/nausicaa.nmconnection 
+[connection]
+id=nausicaa
+uuid=***REMOVED***
+type=wifi
+interface-name=wlan0_ap
+timestamp=1751190105
+
+[wifi]
+band=bg
+channel=6
+mac-address=***REMOVED***
+mode=ap
+ssid=nausicaa
+
+[wifi-security]
+key-mgmt=wpa-psk
+psk=***REMOVED***
+
+[ipv4]
+address1=10.42.0.1/24
+method=shared
+
+[ipv6]
+addr-gen-mode=stable-privacy
+method=shared
+
+[proxy]
+
+
+
+[connection]
+id=Tel@Matthieu 1
+uuid=***REMOVED***
+type=wifi
+interface-name=wlan9
+
+[wifi]
+mode=infrastructure
+ssid=Tel@Matthieu
+
+[wifi-security]
+auth-alg=open
+key-mgmt=wpa-psk
+psk=***REMOVED***
+
+[ipv4]
+method=auto
+
+[ipv6]
+addr-gen-mode=default
+method=auto
+
+[proxy]
+
+
+ARCHER TX2 OU Plus
