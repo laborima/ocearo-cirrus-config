@@ -5,4 +5,5 @@ etc/systemd/system/kiosk.service etc/systemd/system/
 etc/systemd/system/ps5-controller.service etc/systemd/system/
 etc/udev/rules.d/99-ps5-controller.rules etc/udev/rules.d/
 usr/local/bin/setup-certs.sh usr/local/bin/
+usr/local/bin/setup-jarvis.sh usr/local/bin/
 etc/systemd/system/cirrus-certs.service etc/systemd/system/
