@@ -14,16 +14,16 @@ mkdir -p "$CERTS_DIR"
 
 # If certs already exist, skip generation but still install the root CA
 if [[ -f "$DOMAIN_PEM" && -f "$ROOT_CERT" ]]; then
-  echo "✅ Certificates already exist, skipping generation."
+  echo "Certificates already exist, skipping generation."
 else
-  echo "🔐 Creating Root CA key..."
+  echo "Creating Root CA key..."
   openssl genrsa -out "$ROOT_KEY" 2048
 
-  echo "📄 Creating Root CA certificate..."
+  echo "Creating Root CA certificate..."
   openssl req -x509 -new -nodes -key "$ROOT_KEY" -sha256 -days 3650 -out "$ROOT_CERT" \
     -subj "/C=FR/ST=NA/L=LaRochelle/O=cirrus/CN=cirrus.local Root CA"
 
-  echo "🔑 Creating domain private key..."
+  echo "Creating domain private key..."
   openssl genrsa -out "$DOMAIN_KEY" 2048
 
   cat > "$OPENSSL_CONFIG" <<EOF
@@ -54,27 +54,27 @@ IP.1 = 127.0.0.1
 IP.2 = ::1
 EOF
 
-  echo "📄 Creating CSR..."
+  echo "Creating CSR..."
   openssl req -new -key "$DOMAIN_KEY" -out "$DOMAIN_CSR" -config "$OPENSSL_CONFIG"
 
-  echo "🔏 Signing certificate with Root CA..."
+  echo "Signing certificate with Root CA..."
   openssl x509 -req -in "$DOMAIN_CSR" -CA "$ROOT_CERT" -CAkey "$ROOT_KEY" -CAcreateserial \
     -out "$DOMAIN_CERT" -days 825 -sha256 -extfile "$OPENSSL_CONFIG" -extensions req_ext
 
   cat "$DOMAIN_KEY" "$DOMAIN_CERT" > "$DOMAIN_PEM"
   
-  echo "✅ Certificates generated in: $CERTS_DIR"
+  echo "Certificates generated in: $CERTS_DIR"
 fi
 
 # Install Root CA in system trust store
-echo "🔒 Installing Root CA in system trust store..."
+echo "Installing Root CA in system trust store..."
 mkdir -p /usr/local/share/ca-certificates/cirrus
 cp "$ROOT_CERT" /usr/local/share/ca-certificates/cirrus/cirrus-rootCA.crt
 chmod 644 /usr/local/share/ca-certificates/cirrus/cirrus-rootCA.crt
 update-ca-certificates
 
 # Install Root CA in Chromium NSS database for all users
-echo "🌐 Installing Root CA in Chromium trust store for all users..."
+echo "Installing Root CA in Chromium trust store for all users..."
 for user_home in /home/*; do
   if [ -d "$user_home" ]; then
     username=$(basename "$user_home")
@@ -90,7 +90,7 @@ for user_home in /home/*; do
     # Add the CA certificate
     if [ -d "$nssdb" ]; then
       sudo -u "$username" certutil -d "sql:$nssdb" -A -t "C,," -n "Cirrus Root CA" -i "$ROOT_CERT" || true
-      echo "  ✓ Added to $username's Chromium trust store"
+      echo "  Added to $username's Chromium trust store"
     fi
   fi
 done
@@ -103,21 +103,23 @@ if [ ! -d "$root_nssdb" ]; then
 fi
 certutil -d "sql:$root_nssdb" -A -t "C,," -n "Cirrus Root CA" -i "$ROOT_CERT" || true
 
-# Copy certificates to Signal K directory
-SIGNALK_SSL_DIR="/home/pi/.signalk/ssl"
-mkdir -p "$SIGNALK_SSL_DIR"
-chmod 755 "/home/pi/.signalk"
-chmod 700 "$SIGNALK_SSL_DIR"
+# Copy certificates to Signal K directory using community standard naming
+SIGNALK_DIR="/home/pi/.signalk"
 
-# Copy domain certificate and key
-cp "$DOMAIN_PEM" "$SIGNALK_SSL_DIR/key-cert.pem"
-# Copy root CA
-cp "$ROOT_CERT" "$SIGNALK_SSL_DIR/ca.pem"
+
+# Copy certificates with SignalK community standard names
+cp "$DOMAIN_CERT" "$SIGNALK_DIR/ssl-cert.pem"
+cp "$ROOT_CERT" "$SIGNALK_DIR/ssl-chain.pem"
+cp "$DOMAIN_KEY" "$SIGNALK_DIR/ssl-key.pem"
 
 # Set proper permissions
-chown -R pi:pi "$SIGNALK_SSL_DIR"
-chmod 600 "$SIGNALK_SSL_DIR/"*
+chown -R pi:pi "$SIGNALK_DIR"
+chmod 600 "$SIGNALK_DIR/ssl-"*
 
-echo "✅ Certificate setup complete!"
-echo "   - Certificates copied to $SIGNALK_SSL_DIR"
+echo "Certificate setup complete!"
+echo "   - Certificates copied to $SIGNALK_DIR with SignalK standard names:"
+echo "     * ssl-cert.pem (domain certificate)"
+echo "     * ssl-chain.pem (CA certificate)"
+echo "     * ssl-key.pem (private key)"
+echo "   - Root CA installed in system and browser trust stores"
 echo "   - You may need to restart Signal K for changes to take effect"
