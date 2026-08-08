@@ -40,7 +40,18 @@ preferred_profile() {
 }
 
 # Power saving makes an already-marginal 2.4 GHz link drop more often.
+# nmcli first: it persists in the profile and needs no extra package. iw is only
+# a best-effort immediate nudge and is not installed on every image.
 disable_powersave() {
+    local profile
+    profile=$(preferred_profile)
+    if [ -n "$profile" ]; then
+        current=$(nmcli -t -f 802-11-wireless.powersave connection show "$profile" 2>/dev/null | cut -d: -f2)
+        case "$current" in
+            *2*) ;;   # already disabled
+            *) nmcli connection modify "$profile" 802-11-wireless.powersave 2 2>/dev/null || true ;;
+        esac
+    fi
     if command -v iw >/dev/null 2>&1; then
         iw dev "$IFACE" set power_save off 2>/dev/null || true
     fi

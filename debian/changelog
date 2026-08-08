@@ -1,3 +1,18 @@
+cirrusconfig (0.1-4) unstable; urgency=medium
+
+  * kiosk: launch KIP alone on the DSI when HDMI is unplugged, and read each
+    screen's real origin from xrandr instead of pinning the DSI window to 1920,0
+  * setup-screens: map the DSI touchscreen in the single-screen branch too
+    (TOUCH_DSI was only assigned in the dual-screen branch)
+  * add wifi-watchdog, recovering wlan0 when the supplicant sticks on
+    CTRL-EVENT-ASSOC-REJECT (88 retries over 16 minutes observed on 2026-07-24)
+  * cirrus-certs: order after time-sync.target so certificates are not stamped
+    with a 1970 notBefore on a Pi with no RTC battery
+  * ship signalk-ensure-ssl.sh, the signalk systemd drop-ins, the chromium.d
+    fragment and test-ps5-controller.sh, all previously missing from the package
+
+ -- Matthieu Laborie <laborima@gmail.com>  Sat, 08 Aug 2026 14:30:00 +0200
+
 cirrusconfig (0.1-3) unstable; urgency=medium
 
   * add jarvis initialization script
