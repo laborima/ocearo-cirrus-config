@@ -14,3 +14,6 @@ etc/systemd/system/signalk.service.d/10-ensure-ssl.conf etc/systemd/system/signa
 etc/systemd/system/signalk.socket.d/10-ssl-ports.conf etc/systemd/system/signalk.socket.d/
 etc/udev/rules.d/99-ps5-controller.rules etc/udev/rules.d/
 etc/chromium.d/50-cirrus etc/chromium.d/
+usr/local/bin/ollama-power.sh usr/local/bin/
+etc/systemd/system/ollama-power.service etc/systemd/system/
+etc/systemd/system/ollama.service.d/10-cirrus-power.conf etc/systemd/system/ollama.service.d/

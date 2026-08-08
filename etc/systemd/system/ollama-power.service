@@ -1,0 +1,15 @@
+[Unit]
+Description=Stop Ollama while it is idle to free CPU and RAM on the Pi
+After=ollama.service
+Wants=ollama.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ollama-power.sh
+Restart=always
+RestartSec=30
+User=root
+Nice=15
+
+[Install]
+WantedBy=multi-user.target
