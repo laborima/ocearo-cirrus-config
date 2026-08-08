@@ -77,7 +77,17 @@ else
     xrandr --output "$PRIMARY_DSI" --primary --mode 720x1280 \
            --output "$PRIMARY_HDMI" --off
 
-    xinput map-to-output "$TOUCH_DSI" "$PRIMARY_DSI" || true
+    # TOUCH_DSI is only assigned inside the dual-screen branch above, so this ran
+    # as `xinput map-to-output "" DSI-2` and failed silently behind `|| true` —
+    # the touchscreen was never mapped whenever HDMI was unplugged.
+    TOUCH_DSI=$(get_touch_dsi_id)
+    if [ -n "$TOUCH_DSI" ]; then
+        xinput set-prop "$TOUCH_DSI" "Coordinate Transformation Matrix" 1 0 0 0 1 0 0 0 1 2>/dev/null || true
+        xinput map-to-output "$TOUCH_DSI" "$PRIMARY_DSI" 2>/dev/null || true
+        echo ">>> DSI touch mapped to $PRIMARY_DSI"
+    else
+        echo ">>> DSI touch device not found"
+    fi
 
     # Switch audio to Jack
     if command -v pactl >/dev/null 2>&1; then
