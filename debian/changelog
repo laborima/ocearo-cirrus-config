@@ -10,6 +10,9 @@ cirrusconfig (0.1-4) unstable; urgency=medium
     with a 1970 notBefore on a Pi with no RTC battery
   * ship signalk-ensure-ssl.sh, the signalk systemd drop-ins, the chromium.d
     fragment and test-ps5-controller.sh, all previously missing from the package
+  * add ollama-power: cap OLLAMA_KEEP_ALIVE at 60s and stop the service while
+    idle, so 1.4GB of RAM and a 250%-CPU resident process are not held at the
+    dock (ocearo-core wakes it on demand for the next question)
 
  -- Matthieu Laborie <laborima@gmail.com>  Sat, 08 Aug 2026 14:30:00 +0200
 
