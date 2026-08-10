@@ -1,6 +1,10 @@
 [Unit]
 Description=Generate self-signed certs for Cirrus if missing
-After=network.target
+# time-sync.target matters here: the Pi has no RTC battery, so it boots in 1970
+# until NTP or the GPS-fed set-system-time plugin corrects the clock. Generating
+# certificates before that stamps them with an absurd notBefore date.
+After=network.target time-sync.target
+Wants=time-sync.target
 
 [Service]
 Type=oneshot

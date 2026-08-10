@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  ocearo-cirrus-rpi5:
+    build:
+      context: .
+      dockerfile: Dockerfile.rpi5
+      platforms:
+        - linux/arm64
+    image: ocearo/cirrus-rpi5:latest
+    container_name: ocearo-cirrus-rpi5
+    restart: unless-stopped
+    platform: linux/arm64
+    
+    # Privileged mode for hardware access
+    privileged: true
+    
+    # Network configuration
+    network_mode: host
+    
+    # Environment variables
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - XDG_RUNTIME_DIR=/tmp/runtime-root
+      - START_KIOSK=${START_KIOSK:-false}
+      - CIRRUS_HOSTNAME=${CIRRUS_HOSTNAME:-cirrus.local}
+      - OCEARO_UI_URL=${OCEARO_UI_URL:-https://cirrus.local/ocearo-ui}
+    
+    # Volume mounts
+    volumes:
+      # X11 socket for GUI applications
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      
+      # Device access
+      - /dev:/dev:rw
+      - /sys:/sys:rw
+      - /proc:/proc:rw
+      
+      # Persistent data
+      - cirrus-certs:/etc/cirrus/certs
+      - signalk-data:/home/pi/.signalk
+      - openplotter-data:/home/pi/.config/openplotter
+      
+      # System configuration
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      
+      # Bluetooth and USB access
+      - /var/run/dbus:/var/run/dbus:rw
+      - /run/udev:/run/udev:ro
+    
+    # Device access for hardware
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/input:/dev/input
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyACM0:/dev/ttyACM0
+    
+    # Ports
+    ports:
+      - "80:80"
+      - "443:443"
+      - "3000:3000"
+      - "3001:3001"
+      - "4200:4200"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Labels
+    labels:
+      - "com.ocearo.service=cirrus-rpi5"
+      - "com.ocearo.version=1.0.0"
+      - "com.ocearo.description=RPI5 with OpenPlotter V4 and Cirrus configuration"
+
+  # Optional: Signal K server service
+  signalk:
+    image: signalk/signalk-server:latest
+    container_name: ocearo-signalk
+    restart: unless-stopped
+    network_mode: host
+    platform: linux/arm64
+    volumes:
+      - signalk-data:/home/node/.signalk
+      - cirrus-certs:/etc/cirrus/certs:ro
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      - SIGNALK_NODE_CONFIG_DIR=/home/node/.signalk
+    depends_on:
+      - ocearo-cirrus-rpi5
+
+volumes:
+  cirrus-certs:
+    driver: local
+  signalk-data:
+    driver: local
+  openplotter-data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

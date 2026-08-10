@@ -1,0 +1,125 @@
+# Dockerfile for RPI5 with OpenPlotter V4 and Ocearo Cirrus Configuration
+# Based on Debian Bookworm ARM64 with OpenPlotter components
+
+FROM debian:bookworm-slim
+
+# Metadata
+LABEL maintainer="Ocearo Team"
+LABEL description="RPI5 Docker image with OpenPlotter V4 and Ocearo Cirrus Configuration"
+LABEL version="1.0.0"
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY=:0
+ENV XDG_RUNTIME_DIR=/tmp/runtime-root
+
+# Update system and install base dependencies
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    wget \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    build-essential \
+    devscripts \
+    debhelper \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js repository for Signal K
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+
+# Update package lists and install core system packages
+RUN apt-get update && apt-get install -y \
+    bluetooth \
+    bluez \
+    bluez-tools \
+    git \
+    systemd \
+    udev \
+    openssl \
+    python3 \
+    python3-dev \
+    nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install GUI and browser packages separately
+RUN apt-get update && apt-get install -y \
+    xorg \
+    openbox \
+    unclutter \
+    chromium \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install controller support packages
+RUN apt-get update && apt-get install -y \
+    xboxdrv \
+    python3-serial \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the Debian package source files
+COPY . /tmp/cirrusconfig-build/
+
+# Build and install the cirrusconfig package locally
+WORKDIR /tmp/cirrusconfig-build
+RUN chmod +x build.sh \
+    && ./build.sh \
+    && dpkg -i ../cirrusconfig_*.deb || apt-get install -f -y
+
+# Install pip manually using get-pip.py with --break-system-packages
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+    && python3 get-pip.py --break-system-packages \
+    && rm get-pip.py
+
+# Install Signal K server using correct package name
+RUN npm install -g signalk-server
+
+# Install basic Python marine libraries (avoiding compilation issues)
+RUN pip3 install --break-system-packages \
+    pynmea2
+
+# Create necessary directories
+RUN mkdir -p /etc/cirrus/certs \
+    && mkdir -p /usr/local/bin \
+    && mkdir -p /etc/systemd/system \
+    && mkdir -p /etc/udev/rules.d \
+    && mkdir -p /home/pi/.signalk/ssl \
+    && mkdir -p /home/pi/.config/openplotter \
+    && mkdir -p /var/log/signalk
+
+# Set up user and permissions
+RUN useradd -m -s /bin/bash pi || true \
+    && usermod -a -G audio,video,input,dialout,plugdev,bluetooth,sudo pi \
+    && chown -R pi:pi /home/pi \
+    && echo "pi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Configure systemd services
+RUN systemctl enable kiosk.service || true \
+    && systemctl enable ps5-controller.service || true \
+    && systemctl enable cirrus-certs.service || true
+
+# Create runtime directory
+RUN mkdir -p /tmp/runtime-root \
+    && chmod 700 /tmp/runtime-root
+
+# Expose ports for web services
+EXPOSE 80 443 3000 3001 4200
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000 || exit 1
+
+# Set working directory
+WORKDIR /home/pi
+
+# Copy entrypoint script
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Switch to pi user
+USER pi
+
+# Entry point
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["openplotter"]

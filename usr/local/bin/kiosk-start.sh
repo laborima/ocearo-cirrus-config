@@ -11,8 +11,14 @@ export XDG_RUNTIME_DIR="/run/user/${PI_UID}"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
 
 # Config
-URL_DSI="https://cirrus.local:3443/@mxtommy/kip"
-URL_HDMI="https://cirrus.local:3443/ocearo-ui"
+# localhost, not cirrus.local: the UI must keep working when the WiFi has not
+# associated yet (mDNS resolution fails and the kiosk would show an error page).
+URL_DSI="https://localhost:3443/@mxtommy/kip"
+URL_HDMI="https://localhost:3443/ocearo-ui"
+
+# Must match setup-screens.sh
+PRIMARY_DSI="DSI-2"
+PRIMARY_HDMI="HDMI-1-1"
 
 # Allow root to talk to X if script is run as root
 if [ "$(id -u)" -eq 0 ]; then
@@ -38,16 +44,48 @@ sudo -u pi env DISPLAY="$DISPLAY" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" DBUS_SESSIO
 
 # Start Chromium on each screen as user 'pi'
 # 3D optimization flags for Raspberry Pi 5 GPU
-CHROMIUM_3D_FLAGS="--enable-gpu-rasterization --enable-zero-copy --enable-accelerated-video-decode --enable-hardware-overlays --use-angle=gles --enable-features=VaapiVideoDecoder --disable-software-rasterizer --enable-oop-rasterization --num-raster-threads=2 --enable-raw-draw"
+# autoplay/certificate flags are required for KIP's notification sounds over the
+# self-signed localhost certificate.
+CHROMIUM_3D_FLAGS="--autoplay-policy=no-user-gesture-required --ignore-certificate-errors --test-type --enable-gpu-rasterization --enable-zero-copy --enable-accelerated-video-decode --enable-hardware-overlays --use-angle=gles --enable-features=VaapiVideoDecoder --disable-software-rasterizer --enable-oop-rasterization --num-raster-threads=2 --enable-raw-draw"
+CHROMIUM_COMMON="--disable-translate --start-fullscreen --disable-restore-session-state --disable-session-crashed-bubble --hide-crash-restore-bubble --disable-infobars --password-store=basic --noerrdialogs --no-first-run --no-default-browser-check"
 
-sudo -u pi env DISPLAY="$DISPLAY" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
-  chromium-browser --disable-translate --start-fullscreen --disable-restore-session-state --disable-session-crashed-bubble --hide-crash-restore-bubble --disable-infobars --password-store=basic --noerrdialogs --no-first-run --no-default-browser-check --window-position=0,0 \
-  $CHROMIUM_3D_FLAGS \
-  --user-data-dir=/home/pi/.config/chrome-hdmi "$URL_HDMI" &
+as_pi() {
+    sudo -u pi env DISPLAY="$DISPLAY" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+        DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" "$@"
+}
 
-sudo -u pi env DISPLAY="$DISPLAY" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
-  chromium-browser -force-device-scale-factor=1.2 --disable-translate --start-fullscreen --disable-restore-session-state --disable-session-crashed-bubble --hide-crash-restore-bubble --disable-infobars --password-store=basic --noerrdialogs --no-first-run --no-default-browser-check --kiosk --window-position=1920,0 \
-  $CHROMIUM_3D_FLAGS \
-  --user-data-dir=/home/pi/.config/chrome-dsi "$URL_DSI" &
+# Read each screen's real origin from X rather than assuming the dual-screen
+# layout. Previously both browsers were always launched and the DSI window was
+# pinned to 1920,0 — with HDMI unplugged the DSI sits at 0,0, so KIP opened off
+# screen and the ocearo-ui window landed on the small display instead.
+screen_origin() {
+    as_pi xrandr | awk -v out="$1" '$1 == out && $2 == "connected" {
+        for (i = 3; i <= NF; i++) if ($i ~ /^[0-9]+x[0-9]+\+[0-9]+\+[0-9]+$/) {
+            split($i, a, "+"); print a[2] "," a[3]; exit
+        }
+    }'
+}
+
+HDMI_ORIGIN=$(screen_origin "$PRIMARY_HDMI")
+DSI_ORIGIN=$(screen_origin "$PRIMARY_DSI")
+
+if [ -n "$HDMI_ORIGIN" ]; then
+    echo ">>> Dual screen: ocearo-ui on $PRIMARY_HDMI ($HDMI_ORIGIN), KIP on $PRIMARY_DSI ($DSI_ORIGIN)"
+    as_pi chromium-browser $CHROMIUM_COMMON --window-position="$HDMI_ORIGIN" \
+        $CHROMIUM_3D_FLAGS \
+        --user-data-dir=/home/pi/.config/chrome-hdmi "$URL_HDMI" &
+
+    as_pi chromium-browser -force-device-scale-factor=1.2 $CHROMIUM_COMMON --kiosk \
+        --window-position="${DSI_ORIGIN:-1920,0}" \
+        $CHROMIUM_3D_FLAGS \
+        --user-data-dir=/home/pi/.config/chrome-dsi "$URL_DSI" &
+else
+    # Single screen: KIP only, on the DSI, at wherever it actually is.
+    echo ">>> Single screen: KIP only on $PRIMARY_DSI (${DSI_ORIGIN:-0,0})"
+    as_pi chromium-browser -force-device-scale-factor=1.2 $CHROMIUM_COMMON --kiosk \
+        --window-position="${DSI_ORIGIN:-0,0}" \
+        $CHROMIUM_3D_FLAGS \
+        --user-data-dir=/home/pi/.config/chrome-dsi "$URL_DSI" &
+fi
 
 wait

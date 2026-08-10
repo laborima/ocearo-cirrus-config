@@ -1,0 +1,16 @@
+[Unit]
+Description=Recover wlan0 when the supplicant refuses to associate
+After=NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wifi-watchdog.sh
+Restart=always
+RestartSec=15
+# Cycling the radio and bringing profiles up needs root; nothing else does.
+User=root
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
