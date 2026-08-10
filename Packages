@@ -1,0 +1,19 @@
+Package: cirrusconfig
+Version: 0.2-1
+Architecture: all
+Maintainer: Matthieu Laborie <laborima@gmail.com>
+Installed-Size: 64
+Depends: chromium, xserver-xorg, xinput, x11-xserver-utils, bluez, joystick, pulseaudio-utils, libnss3-tools, network-manager, iw, fake-hwclock
+Recommends: xboxdrv
+Filename: ./cirrusconfig_0.2-1_all.deb
+Size: 14804
+MD5sum: 7267107339c79162f52ed3487f98f84c
+SHA1: 404b43ce126d039f1c0b0cd5bec00fe699295e1d
+SHA256: 8ef753212faa866f648bf38fb570913ae8661e2b860f4fda2a9e811eed8933bc
+Section: utils
+Priority: optional
+Description: Kiosk, screen, wifi and clock setup for Cirrus
+ Configures the Chromium kiosk (one or two touchscreens), the Signal K SSL
+ guard, a wifi association watchdog, and the clock safety net for a Raspberry
+ Pi 5 with no RTC battery.
+
